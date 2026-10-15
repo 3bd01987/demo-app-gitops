@@ -1,0 +1,10 @@
+The demo-app has been deployed.
+
+Check the pod:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Check the secrets the app is reading from Vault:
+  kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }} -c app --tail=10
+
+Confirm there is NO Kubernetes Secret:
+  kubectl get secrets -n {{ .Release.Namespace }}

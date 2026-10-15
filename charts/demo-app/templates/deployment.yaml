@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "demo-app-chart.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "demo-app-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "demo-app-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "demo-app-chart.selectorLabels" . | nindent 8 }}
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: {{ .Values.vault.role | quote }}
+        vault.hashicorp.com/agent-inject-secret-{{ .Values.vault.secretFile }}: {{ .Values.vault.secretPath | quote }}
+        vault.hashicorp.com/agent-inject-template-{{ .Values.vault.secretFile }}: |
+          {{- printf "{{- with secret %q -}}" .Values.vault.secretPath | nindent 10 }}
+          username={{ "{{ .Data.data.username }}" }}
+          password={{ "{{ .Data.data.password }}" }}
+          {{- printf "{{- end -}}" | nindent 10 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - while true; do echo '--- secrets ---'; cat /vault/secrets/{{ .Values.vault.secretFile }} 2>/dev/null || echo 'not ready'; sleep 30; done
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

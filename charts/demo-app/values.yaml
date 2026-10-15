@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: busybox
+  tag: "1.36"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: demo-app
+
+vault:
+  role: demo-app
+  secretPath: secret/data/demo
+  secretFile: db-creds
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 64Mi
